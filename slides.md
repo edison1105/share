@@ -22,12 +22,8 @@ drawings:
 ---
 
 # Vue3 Virtual DOM 性能优化
-Vue3 为了优化运行时性能，对 Virtual DOM 进行了重构。
 
-### 传统 diff 算法的性能瓶颈 
-### Vue3 Virtual DOM 的重构思路
-### diff 算法的改进
-    
+[戴威 / vue.js team member ](https://github.com/edison1105) 
 
 <div class="pt-12">
   <span @click="$slidev.nav.next" class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
@@ -40,6 +36,8 @@ Vue3 为了优化运行时性能，对 Virtual DOM 进行了重构。
 # Virtual DOM 性能优化
 
 - **组件的工作原理**
+    - 编译阶段
+    - 运行时
 - **传统 Diff 算法存在的问题** 
     - 性能的浪费
     - 思考如何优化
@@ -53,12 +51,18 @@ Vue3 为了优化运行时性能，对 Virtual DOM 进行了重构。
 --- 
 
 # 组件是如何工作的
-    - template 到 render 函数
-    - render函数返回 vdom
+    - 编译阶段：将模板编译成 render 函数
+
+    - 运行时：
+      - 数据响应式处理
+      - 执行 render 函数返回 VNode
+      - mount 阶段
+      - patch 阶段
 ---
 
 # 组件的更新过程是怎样的
-  diff vdom
+  diff VNode
+
 ---
 
 # 传统 Diff 算法
@@ -89,6 +93,22 @@ Block 跟 children的关系
 
 ---
 
+# 结构稳定的Fragment
+    - v-for 表达式是常量
+---
+
+# 结构稳定的Fragment
+    - 多个根元素
+---
+
+# 结构稳定的Fragment
+    - 插槽出口
+---
+
+# 结构稳定的Fragment
+    - template v-for
+---
+
 # 结构不稳定的节点
     - v-if
     - v-for
@@ -106,22 +126,6 @@ Fragment
 
 ---
 
-# 结构稳定的Fragment
-    - v-for 表达式是常量
----
-
-# 结构稳定的Fragment
-    - 多个根元素
----
-
-# 结构稳定的Fragment
-    - 插槽出口
----
-
-# 结构稳定的Fragment
-    - template v-for
----
-
 # 属性的优化 PatchFlags
     - class
 
@@ -137,26 +141,15 @@ Fragment
 
 ---
 
-# PatchFlags
-什么样的节点不能走fast path
+
+# diff 的优化
+    dynamicChildren 
 
 ---
 
 # diff 的优化
-    children 进入优化模式
-
----
-
-# diff 的优化
-    哪些情况需要推出优化模式
-    如何退出优化模式
+    dynamicProps 
  
----
-
-
-# Props 的优化
-    children 进入优化模式
-
 ---
 
 
