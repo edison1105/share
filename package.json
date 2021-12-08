@@ -8,7 +8,8 @@
   "dependencies": {
     "@slidev/cli": "^0.27.16",
     "@slidev/theme-default": "*",
-    "@slidev/theme-seriph": "*"
+    "@slidev/theme-seriph": "*",
+    "slidev-theme-vuetiful": "^0.1.0"
   },
   "name": "vue3-optimize"
 }

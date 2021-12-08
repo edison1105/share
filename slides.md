@@ -1,6 +1,6 @@
 ---
 # try also 'default' to start simple
-theme: seriph
+theme: vuetiful
 # random image from a curated Unsplash collection by Anthony
 # like them? see https://unsplash.com/collections/94734566/slidev
 background: https://source.unsplash.com/collection/94734566/1920x1080
@@ -23,7 +23,7 @@ drawings:
 
 # Vue3 Virtual DOM 性能优化
 
-[戴威 / vue.js team member ](https://github.com/edison1105) 
+[戴威 / Vue.js team member ](https://github.com/edison1105) 
 
 <div class="pt-12">
   <span @click="$slidev.nav.next" class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
@@ -51,17 +51,24 @@ drawings:
 --- 
 
 # 组件是如何工作的
-    - 编译阶段：将模板编译成 render 函数
 
-    - 运行时：
-      - 数据响应式处理
-      - 执行 render 函数返回 VNode
-      - mount 阶段
-      - patch 阶段
+  - 编译阶段
+    - Parse 模板字符串 -> AST
+    - Transform 对 AST 进行转换
+    - Generate AST -> render 函数
+
+---
+
+# 组件是如何工作的
+  - 运行时
+    - 数据响应式处理
+    - render 阶段，render 执行函数返回 VNode
+    - mount 阶段，VNode 渲染成 HTML
+    - patch 阶段，响应式数据变化，render 函数重新执行，拿到新的 VNode,新旧 VNode 对比，更新 HTML
 ---
 
 # 组件的更新过程是怎样的
-  diff VNode
+  - patch 阶段 
 
 ---
 
@@ -128,6 +135,23 @@ Fragment
 
 # 属性的优化 PatchFlags
     - class
+```typescript
+export const enum PatchFlags {
+  TEXT = 1 ,  // 动态文本节点
+  CLASS = 1 << 1,  // 2   动态class
+  STYLE = 1 << 2,  // 4   动态style
+  PROPS = 1 << 3,  // 8   除去class/style以外的动态属性
+  FULL_PROPS = 1 << 4,       // 16  有动态key属性的节点，当key改变时，需进行完整的diff比较
+  HYDRATE_EVENTS = 1 << 5,   // 32  有监听事件的节点
+  STABLE_FRAGMENT = 1 << 6,  // 64  一个不会改变子节点顺序的fragment (一个组件内多个根元素就会用fragment包裹)
+  KEYED_FRAGMENT = 1 << 7,   // 128 带有key属性的fragment或部分子节点有key
+  UNKEYEN_FRAGMENT = 1 << 8, // 256  子节点没有key的fragment
+  NEED_PATCH = 1 << 9,       // 512  一个节点只会进行非props比较
+  DYNAMIC_SLOTS = 1 << 10,   // 1024   动态slot
+  HOISTED = -1,  // 静态节点 
+  BAIL = -2      // 表示 Diff 过程中不需要优化
+}
+```
 
 ---
 
