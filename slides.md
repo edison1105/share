@@ -50,55 +50,109 @@ drawings:
 
 
 ---
-layout: two-cols
----
 
-# Template
-```html
-<div id="app">
-  <p class="red"></p>
-  <p>content</p>
-  <p>content</p>
-  <p>content</p>
-  <p>{{name}}</p>
-  <p>content</p>
+# 组件的工作原理
+<div class="flex">
+<div class="flex-1">
+
+- 编译期
+  - Parse 模板字符串 -> AST
+  - Transform 对 AST 进行转换
+  - Generate AST -> render 函数
+
 </div>
-```
-- Parse 模板字符串 -> AST
-- Transform 对 AST 进行转换
-- Generate AST -> render 函数
+<div class="flex-1 mx-10">
 
-::right::
+  template
 
-# Render 函数
+  ```html
+  <div>hello</div>
+  ```
 
-```javascript
-export function render(_ctx, _cache, $props, $setup, $data, $options) {
-  return (_openBlock(), _createElementBlock("div", { id: "app" }, [
-    _createElementVNode("p", { class: "red" }),
-    _createElementVNode("p", null, "content"),
-    _createElementVNode("p", null, "content"),
-    _createElementVNode("p", null, "content"),
-    _createElementVNode("p", null, _toDisplayString(_ctx.name), 1 /* TEXT */),
-    _createElementVNode("p", null, "content")
-  ]))
-}
-```
+  AST
+  <div class="h-100px overflow-auto">
+
+  ```javascript
+  {
+    "type": 1,
+    "tag": "div",
+    "attrsList": [],
+    "attrsMap": {},
+    "rawAttrsMap": {},
+    "children": [
+      {
+        "type": 3,
+        "text": "hello",
+        "start": 5,
+        "end": 10,
+        "static": true
+      }
+    ],
+    "start": 0,
+    "end": 16,
+    "plain": true,
+    "static": true,
+    "staticInFor": false,
+    "staticRoot": false
+  }
+  ```
+  </div>
+
+  render function
+    
+  ```javascript
+  function render(h) {
+    h('div','hello')
+  }
+  ```
+
+</div>
+</div>
 
 
 ---
 
-# 组件是如何工作的
+# 组件的工作原理
+<div class="flex">
+<div class="flex-1">
+
   - 运行时
     - 数据响应式处理
-    - render 阶段，render 执行函数返回 VNode
+    - render 阶段，render函数执行返回 VNode
     - mount 阶段，VNode 渲染成 HTML
     - patch 阶段，响应式数据变化，render 函数重新执行，拿到新的 VNode,新旧 VNode 对比，更新 HTML
+
+</div>
+
+<div class="flex-1 mx-10">
+
+render function
+```javascript
+  function render(h) {
+    h('div','hello')
+  }
+```
+
+VNode
+```javascript
+  {
+    tag:'div',
+    children: [{ text: 'hello' }]
+  }
+```
+</div>
+</div>
+
 ---
 
-# 组件的更新过程是怎样的
+# 组件的工作原理
   - patch 阶段 
-
+```javascript
+  {
+    tag:'div',
+    children: [{ text: 'hello' }]
+  }
+```
 ---
 
 # 传统 Diff 算法
