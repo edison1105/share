@@ -1,6 +1,7 @@
 ---
 # try also 'default' to start simple
-theme: vuetiful
+theme: seriph
+themeConfig: '#41b883'
 # random image from a curated Unsplash collection by Anthony
 # like them? see https://unsplash.com/collections/94734566/slidev
 background: https://source.unsplash.com/collection/94734566/1920x1080
@@ -20,7 +21,6 @@ info: |
 drawings:
   persist: false
 ---
-
 # Vue3 Virtual DOM 性能优化
 
 [戴威 / Vue.js team member ](https://github.com/edison1105) 
@@ -48,14 +48,43 @@ drawings:
     - diff的整个流程 
     - 优化模式
 
---- 
 
-# 组件是如何工作的
+---
+layout: two-cols
+---
 
-  - 编译阶段
-    - Parse 模板字符串 -> AST
-    - Transform 对 AST 进行转换
-    - Generate AST -> render 函数
+# Template
+```html
+<div id="app">
+  <p class="red"></p>
+  <p>content</p>
+  <p>content</p>
+  <p>content</p>
+  <p>{{name}}</p>
+  <p>content</p>
+</div>
+```
+- Parse 模板字符串 -> AST
+- Transform 对 AST 进行转换
+- Generate AST -> render 函数
+
+::right::
+
+# Render 函数
+
+```javascript
+export function render(_ctx, _cache, $props, $setup, $data, $options) {
+  return (_openBlock(), _createElementBlock("div", { id: "app" }, [
+    _createElementVNode("p", { class: "red" }),
+    _createElementVNode("p", null, "content"),
+    _createElementVNode("p", null, "content"),
+    _createElementVNode("p", null, "content"),
+    _createElementVNode("p", null, _toDisplayString(_ctx.name), 1 /* TEXT */),
+    _createElementVNode("p", null, "content")
+  ]))
+}
+```
+
 
 ---
 
