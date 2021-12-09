@@ -188,7 +188,36 @@ VNode
 ---
 
 # 传统 Diff 算法
-介绍diff算法
+- diff 算法对比颗粒度是组件
+- 单个组件内部需要遍历整个 VNode
+  
+<div class="flex mt-20px">
+  <div class="flex-1">
+  template
+
+  ```html
+  <template>
+    <div id="content">
+      <p class="test">content</p>
+      <p class="test">content</p>
+      <p class="test">{{ msg }}</p>
+      <p class="test">content</p>
+      <p class="test">content</p>
+    </div>
+  </template>
+  ```
+  </div>
+  <div class="flex-1 mx-10px">
+  Diff 的过程
+
+  - diff DIV
+    - diff props of DIV
+    - diff children of DIV
+      - diff P (重复多次)
+        - diff props of P
+        - diff children of P
+  </div>
+</div>
 
 ---
 
