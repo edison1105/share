@@ -55,7 +55,7 @@ drawings:
 <div class="flex">
 <div class="flex-1">
 
-- 编译期
+- 编译阶段
   - Parse 模板字符串 -> AST
   - Transform 对 AST 进行转换
   - Generate AST -> render 函数
@@ -66,7 +66,9 @@ drawings:
   template
 
   ```html
-  <div>hello</div>
+  <template>
+    <div>hello</div>
+  </template>
   ```
 
   AST
@@ -120,7 +122,6 @@ drawings:
     - 数据响应式处理
     - render 阶段，render函数执行返回 VNode
     - mount 阶段，VNode 渲染成 HTML
-    - patch 阶段，响应式数据变化，render 函数重新执行，拿到新的 VNode,新旧 VNode 对比，更新 HTML
 
 </div>
 
@@ -146,13 +147,44 @@ VNode
 ---
 
 # 组件的工作原理
-  - patch 阶段 
-```javascript
-  {
-    tag:'div',
-    children: [{ text: 'hello' }]
-  }
-```
+  - 运行时
+    - 响应式数据变化，render 函数重新执行，得到新的 VNode
+    - patch 阶段：新、旧 VNode diff，更新 HTML
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  <div class="flex-1">
+
+  old VNode
+  ```javascript
+      {
+        tag:'div',
+        children: [{ text: 'hello' }]
+      }
+  ```
+  </div>
+  <div class="flex-1">
+
+  new VNode
+  ```javascript
+      {
+        tag:'div',
+        children: [{ text: 'world' }]
+      }
+  ```
+  </div>
+  </div>
+  <div class="flex-1 mt-30 mx-10px">
+  
+  new HTML
+
+  ```html
+    <div>world</div>
+  ```
+
+  </div>
+</div>
+
 ---
 
 # 传统 Diff 算法
