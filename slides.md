@@ -188,10 +188,9 @@ VNode
 ---
 
 # 传统 Diff 算法
-- diff 算法对比颗粒度是组件
-- 单个组件内部需要遍历整个 VNode
+
   
-<div class="flex mt-20px">
+<div class="flex mt-60px">
   <div class="flex-1">
   template
 
@@ -219,6 +218,13 @@ VNode
   </div>
 </div>
 
+<div class="mt-30px">
+
+- diff 算法对比颗粒度是组件
+- 单个组件内部需要遍历整个 VNode
+- 存在性能损耗，跟模板大小正相关，跟动态节点的数量无关
+
+</div>
 ---
 
 # 有什么缺点
