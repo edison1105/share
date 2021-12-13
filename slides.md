@@ -272,9 +272,6 @@ var code = generate(ast, options);
       - 不是组件类型
       - 静态节点的祖先节点，不是带有 v-for 指令的 template 节点
       - 节点只包含staticClass,staticStyle + [基础属性](https://astexplorer.net/#/gist/51a08f2ce6aa6422d7794b7992e7b4da/f48e7715ca6b8feabc1e35ea6e85ba79c2f6903a)
-      
-        
-      
 
   </div>
 </div>
@@ -287,6 +284,10 @@ var code = generate(ast, options);
 模板的好处
 什么是Block
 Block 跟 children的关系
+
+- 大多数时候我们写的代码都是动态的，所以静态标记优化是有限的。
+- 仍然要遍历整个 VNode 节点
+- 反向思考，如何找动态节点。
 
 ---
 
