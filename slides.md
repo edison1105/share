@@ -271,7 +271,7 @@ var code = generate(ast, options);
       - 不是slot、component
       - 不是组件类型
       - 静态节点的祖先节点，不是带有 v-for 指令的 template 节点
-      - 节点只包含staticClass,staticStyle + [初始属性](https://astexplorer.net/#/gist/51a08f2ce6aa6422d7794b7992e7b4da/f48e7715ca6b8feabc1e35ea6e85ba79c2f6903a)
+      - 节点只包含staticClass,staticStyle + [基础属性](https://astexplorer.net/#/gist/51a08f2ce6aa6422d7794b7992e7b4da/f48e7715ca6b8feabc1e35ea6e85ba79c2f6903a)
       
         
       
