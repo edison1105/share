@@ -188,9 +188,8 @@ VNode
 ---
 
 # 传统 Diff 算法
-
   
-<div class="flex mt-60px">
+<div class="flex">
   <div class="flex-1">
   template
 
@@ -222,13 +221,26 @@ VNode
 
 - diff 算法对比颗粒度是组件
 - 单个组件内部需要遍历整个 VNode
-- 存在性能损耗，跟模板大小正相关，跟动态节点的数量无关
 
 </div>
 ---
 
-# 有什么缺点
-patch过程中所有节点，属性都需要diff
+# diff 算法的缺点
+
+```html {all|5}
+  <template>
+    <div id="content">
+      <p class="test">content</p>
+      <p class="test">content</p>
+      <p class="test">{{ msg }}</p>
+      <p class="test">content</p>
+      <p class="test">content</p>
+    </div>
+  </template>
+```
+
+- patch 过程中所有节点，属性都需要 diff
+- 存在性能损耗，跟模板大小正相关，跟动态节点的数量无关
 
 ---
 
