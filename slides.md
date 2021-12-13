@@ -56,9 +56,9 @@ drawings:
 <div class="flex-1">
 
 - 编译阶段
-  - Parse 模板字符串 -> AST
-  - Transform 对 AST 进行转换
-  - Generate AST -> render 函数
+  - Parse: 模板字符串 -> AST
+  - Transform: 对 AST 进行转换
+  - Generate: AST -> render 函数
 
 </div>
 <div class="flex-1 mx-10">
@@ -244,9 +244,42 @@ VNode
 
 ---
 
-# 思考
-该如何做才能避免
-- 静态标记
+# Vue2 中的做法
+<div class="flex flex-row">
+  <div>
+  
+- 编译期标记静态节点
+
+```javascript
+var ast = parse(template.trim(), options);
+if (options.optimize !== false) {
+  //标记静态节点
+  optimize(ast, options);
+}
+var code = generate(ast, options);
+```
+
+  </div>
+  <div class="flex-1">
+  
+  - 哪些节点是静态的
+    - 节点类型是 text
+    - 节点使用了 v-pre
+    - 其他满足一下条件的节点
+      - 没有绑定的指令、事件等
+      - 不包含v-if、v-for、v-else
+      - 不是slot、component
+      - 不是组件类型
+      - 静态节点的祖先节点，不是带有 v-for 指令的 template 节点
+      - 节点只包含staticClass,staticStyle + [初始属性](https://astexplorer.net/#/gist/51a08f2ce6aa6422d7794b7992e7b4da/f48e7715ca6b8feabc1e35ea6e85ba79c2f6903a)
+      
+        
+      
+
+  </div>
+</div>
+
+
 
 ---
 
