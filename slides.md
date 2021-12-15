@@ -260,7 +260,7 @@ var code = generate(ast, options);
 ```
 
   </div>
-  <div class="flex-1">
+  <div class="flex-1 mx-10">
   
   - 哪些节点是静态的
     - 节点类型是 text
