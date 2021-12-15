@@ -205,7 +205,7 @@ VNode
   </template>
   ```
   </div>
-  <div class="flex-1 mx-10px">
+  <div class="flex-1 mx-20px">
   Diff 的过程
 
   - diff DIV
@@ -220,14 +220,17 @@ VNode
 <div class="mt-30px">
 
 - diff 算法对比颗粒度是组件
-- 单个组件内部需要遍历整个 VNode
+- 遍历整个VNode，同层比较，只更新变化的节点
 
 </div>
 ---
 
-# diff 算法的缺点
+# 传统 diff 算法
+- 缺点
+  - 所有节点，属性都需要 diff
+  - 存在性能损耗，静态不会改变的节点也参与了 diff
 
-```html {all|5}
+```html {all|1-4,6-9}
   <template>
     <div id="content">
       <p class="test">content</p>
@@ -239,12 +242,11 @@ VNode
   </template>
 ```
 
-- patch 过程中所有节点，属性都需要 diff
-- 存在性能损耗，跟模板大小正相关，跟动态节点的数量无关
-
+- 思考
+  - 有没有办法不 diff 静态节点？
 ---
 
-# Vue2 中的做法
+# Vue2 中的优化
 <div class="flex flex-row">
   <div>
   
@@ -262,7 +264,7 @@ var code = generate(ast, options);
   </div>
   <div class="flex-1 mx-10">
   
-  - 哪些节点是静态的
+  - 有哪些节点是静态的？
     - 节点类型是 text
     - 节点使用了 v-pre
     - 其他满足一下条件的节点
@@ -276,9 +278,67 @@ var code = generate(ast, options);
   </div>
 </div>
 
-
-
 ---
+
+# Vue2 中的优化
+- 优化后
+  - patch 时跳过静态节点
+  - 但依然需要遍历整个VNode
+
+```html {all|5}
+  <template>
+    <div id="content">
+      <p class="test">content</p>
+      <p class="test">content</p>
+      <p class="test">{{ msg }}</p>
+      <p class="test">content</p>
+      <p class="test">content</p>
+    </div>
+  </template>
+```
+
+- 重新思考
+  - 我们其实关心的是动态节点，并不关心静态节点。
+  - 有没有办法像标记静态节点那样，找出动态节点，运行时只更新动态节点？
+---
+
+<!--
+只更新动态节点跟不更新静态节点，其实是有区别的。
+1）只更新动态节点可以不按照层级对比，因为在首次渲染之后我们已经将
+el缓存到VNode上了，可以直接 patch。
+-->
+
+
+# Block
+
+- 节点内部结构不会变化
+
+```html {5}
+  <template>
+    <div id="content">
+      <p class="test">content</p>
+      <p class="test">content</p>
+      <p class="test">{{ msg }}</p>
+      <p class="test">content</p>
+      <p class="test">content</p>
+    </div>
+  </template>
+```
+
+
+- 节点的内部结构不会变，就不需要对节点的 children 进行 diff
+- 只有一个动态节点
+- 通过一个数组，将动态节点提取出来，patch 时只更新动态节点
+
+
+只有v-if 跟 v-for 会影响节点的内部结构。
+---
+
+<!--
+如果节点的内部结构不会发生变化，只需要更新动态节点就行了。
+对于这样内部结构不变的节点，我们作为一个单元，提取其中的动态节点。
+相反，如果节点的内部结构是会变化的，那么就需要对整个VNode的children进行对比。
+-->
 
 # Virtual DOM 的重构
 模板的好处
