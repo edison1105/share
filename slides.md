@@ -23,7 +23,11 @@ drawings:
 ---
 # Vue3 Virtual DOM 性能优化
 
-[戴威 / Vue.js team member ](https://github.com/edison1105) 
+<div>
+
+[戴威@edison1105 / Vue.js team member ](https://github.com/edison1105) 
+
+</div>
 
 <div class="pt-12">
   <span @click="$slidev.nav.next" class="px-2 py-1 rounded cursor-pointer" hover="bg-white bg-opacity-10">
@@ -38,7 +42,7 @@ drawings:
 - **组件的工作原理**
     - 编译阶段
     - 运行时
-- **传统 Diff 算法存在的问题** 
+- **传统 Diff 算法** 
     - 性能的浪费
     - 思考如何优化
 - **Virtual DOM 的重构**
@@ -117,7 +121,7 @@ function render(ctx) {
 
 VNode
 ```javascript
-{
+const vnode = {
   tag:'div',
   children: [{ text: ctx.msg }]
 }
@@ -138,7 +142,7 @@ VNode
 
   old VNode
   ```javascript
-  {
+  const vnode = {
     tag:'div',
     children: [{ text: 'hello' }]
   }
@@ -148,7 +152,7 @@ VNode
 
   new VNode
   ```javascript
-  {
+  const newVNode = {
     tag:'div',
     children: [{ text: 'world' }]
   }
@@ -252,7 +256,7 @@ var code = generate(ast, options);
 // renderStatic
 _m = function (index) {
   const node = staticRenderFns[index]()
-  node.isStatic = true//patchVNode 中跳过
+  node.isStatic = true
   return node
 }
 
@@ -307,6 +311,52 @@ _m = function (index) {
 el缓存到VNode上了，可以直接 patch。
 -->
 
+#  Vue3 中的优化
+如何标记动态节点
+
+
+<div class="flex flex-row">
+  <div class="flex-1">
+
+- template
+```html {all}
+  <template>
+    <div id="content">
+      <p class="test">content</p>
+      <p class="test">content</p>
+      <p class="test">{{ msg }}</p>
+      <p class="test">content</p>
+      <p class="test">content</p>
+    </div>
+    
+  </template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - VNode
+
+  ```javascript {all|6}
+  const vnode = {
+    tag: 'div',
+    children:[
+      { tag: 'p', { class: 'test' }, 'content' },
+      { tag: 'p', { class: 'test' }, 'content' },
+      { tag: 'p', { class: 'test' }, ctx.msg }, // 动态节点
+      { tag: 'p', { class: 'test' }, 'content' },
+      { tag: 'p', { class: 'test' }, 'content' },
+    ]
+  }
+  ```
+
+  </div>
+</div>
+
+
+- 编译结果
+    - [AST](https://astexplorer.net/#/gist/51a08f2ce6aa6422d7794b7992e7b4da/5e22b9e652d7a825b2e9c05327375e45805ff64a)
+---
 
 
 
