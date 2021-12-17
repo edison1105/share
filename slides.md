@@ -67,44 +67,17 @@ drawings:
 
   ```html
   <template>
-    <div>hello</div>
+    <div>{{ msg }}</div>
   </template>
   ```
 
-  AST
-  <div class="h-100px overflow-auto">
-
-  ```javascript
-  {
-    "type": 1,
-    "tag": "div",
-    "attrsList": [],
-    "attrsMap": {},
-    "rawAttrsMap": {},
-    "children": [
-      {
-        "type": 3,
-        "text": "hello",
-        "start": 5,
-        "end": 10,
-        "static": true
-      }
-    ],
-    "start": 0,
-    "end": 16,
-    "plain": true,
-    "static": true,
-    "staticInFor": false,
-    "staticRoot": false
-  }
-  ```
-  </div>
+  [AST](https://astexplorer.net/#/gist/8a0bd75dd94ca7093bde998a0dfccd43/c9e0e68e6f504a333180760ac227b8d88ab640bb)
 
   render function
     
   ```javascript
-  function render(h) {
-    h('div','hello')
+  function render(ctx) {
+    return h('div', ctx.msg)
   }
   ```
 
@@ -127,19 +100,27 @@ drawings:
 
 <div class="flex-1 mx-10">
 
+reactive
+```javascript
+new Proxy(ctx, {
+  get(target, key, receiver) {/* 收集依赖 */},
+  set(target, key, value, receiver) {/* 触发依赖 */}
+})
+```
+
 render function
 ```javascript
-  function render(h) {
-    h('div','hello')
-  }
+function render(ctx) {
+  return h('div', ctx.msg)
+}
 ```
 
 VNode
 ```javascript
-  {
-    tag:'div',
-    children: [{ text: 'hello' }]
-  }
+{
+  tag:'div',
+  children: [{ text: ctx.msg }]
+}
 ```
 </div>
 </div>
@@ -157,20 +138,20 @@ VNode
 
   old VNode
   ```javascript
-      {
-        tag:'div',
-        children: [{ text: 'hello' }]
-      }
+  {
+    tag:'div',
+    children: [{ text: 'hello' }]
+  }
   ```
   </div>
   <div class="flex-1">
 
   new VNode
   ```javascript
-      {
-        tag:'div',
-        children: [{ text: 'world' }]
-      }
+  {
+    tag:'div',
+    children: [{ text: 'world' }]
+  }
   ```
   </div>
   </div>
@@ -179,7 +160,7 @@ VNode
   new HTML
 
   ```html
-    <div>world</div>
+  <div>world</div>
   ```
 
   </div>
@@ -220,7 +201,8 @@ VNode
 <div class="mt-30px">
 
 - diff 算法对比颗粒度是组件
-- 遍历整个VNode，同层比较，只更新变化的节点
+- 遍历整个VNode，**深度优先，同层比较**，只更新变化的节点
+- 将差异 patch 到真实 DOM 上，减少回流与重绘
 
 </div>
 ---
@@ -242,11 +224,12 @@ VNode
   </template>
 ```
 
-- 思考
-  - 有没有办法不 diff 静态节点？
+- 思路
+  - 那么才能不对比静态节点？
 ---
 
 # Vue2 中的优化
+Vue2为了向下兼容，采取了比较保守的做法：静态标记
 <div class="flex flex-row">
   <div>
   
@@ -260,12 +243,26 @@ if (options.optimize !== false) {
 }
 var code = generate(ast, options);
 ```
+- render
+```javascript
+{
+  render() { return _m(0) },
+  staticRenderFns: [function(){ return VNode }]
+}
+// renderStatic
+_m = function (index) {
+  const node = staticRenderFns[index]
+  node.isStatic = true
+  return node
+}
+
+```
 
   </div>
   <div class="flex-1 mx-10">
   
   - 有哪些节点是静态的？
-    - 节点类型是 text
+    - 节点类型是3(纯文本)
     - 节点使用了 v-pre
     - 其他满足一下条件的节点
       - 没有绑定的指令、事件等
@@ -282,7 +279,7 @@ var code = generate(ast, options);
 
 # Vue2 中的优化
 - 优化后
-  - patch 时跳过静态节点
+  - patch 时跳过静态节点 diff
   - 但依然需要遍历整个VNode
 
 ```html {all|5}
@@ -300,6 +297,8 @@ var code = generate(ast, options);
 - 重新思考
   - 我们其实关心的是动态节点，并不关心静态节点。
   - 有没有办法像标记静态节点那样，找出动态节点，运行时只更新动态节点？
+  - 标记动态节点，运行时收集起来，patch 时靶向更新
+  - 结构会变化的时候，怎么收集动态节点
 ---
 
 <!--
@@ -307,6 +306,8 @@ var code = generate(ast, options);
 1）只更新动态节点可以不按照层级对比，因为在首次渲染之后我们已经将
 el缓存到VNode上了，可以直接 patch。
 -->
+
+
 
 
 # Block
