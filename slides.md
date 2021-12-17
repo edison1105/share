@@ -251,7 +251,7 @@ var code = generate(ast, options);
 }
 // renderStatic
 _m = function (index) {
-  const node = staticRenderFns[index]
+  const node = staticRenderFns[index]()
   node.isStatic = true
   return node
 }
