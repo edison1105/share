@@ -224,8 +224,8 @@ VNode
   </template>
 ```
 
-- 思路
-  - 那么才能不对比静态节点？
+- 思考
+  - 那么才能避免性能的浪费？
 ---
 
 # Vue2 中的优化
@@ -243,7 +243,7 @@ if (options.optimize !== false) {
 }
 var code = generate(ast, options);
 ```
-- render
+- render function
 ```javascript
 {
   render() { return _m(0) },
@@ -252,7 +252,7 @@ var code = generate(ast, options);
 // renderStatic
 _m = function (index) {
   const node = staticRenderFns[index]()
-  node.isStatic = true
+  node.isStatic = true//patchVNode 中跳过
   return node
 }
 
@@ -264,7 +264,7 @@ _m = function (index) {
   - 有哪些节点是静态的？
     - 节点类型是3(纯文本)
     - 节点使用了 v-pre
-    - 其他满足一下条件的节点
+    - 其他满足以下条件的节点
       - 没有绑定的指令、事件等
       - 不包含v-if、v-for、v-else
       - 不是slot、component
@@ -310,7 +310,7 @@ el缓存到VNode上了，可以直接 patch。
 
 
 
-# Block
+#  Vue3 中的优化
 
 - 节点内部结构不会变化
 
