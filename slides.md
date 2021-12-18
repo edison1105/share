@@ -490,8 +490,7 @@ function render() {
   - v-for
 ---
 
-#  节点的内部结构不稳定
-v-if 节点作为 Block
+#  节点的内部结构不稳定 v-if
 
 <div class="flex flex-row">
   <div class="flex-1">
@@ -595,14 +594,14 @@ v-if 节点作为 Block
 ---
 
 
-#  v-for 节点作为 Block
+#  节点结构不稳定 v-for
 
 <div class="flex flex-row">
   <div class="flex-1">
   
 - template
 
-```html
+```html {all}
 <template>
   <div>
     <div v-for="item in list">
@@ -621,22 +620,22 @@ v-if 节点作为 Block
   
   ```javascript
   // list = ['a', 'b']
-  const block = [
+  const block = {
     type: 'div',
     dynamicChildren:[
       { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
       { type: 'span', children: 'b', patchFlag: 1 /* TEXT */},
       { type: 'i', children: ctx.foo, patchFlag: 1 /* TEXT */},
     ]
-  ]
+  }
   // list = ['a']
-  const block = [
+  const block = {
     type: 'div',
     dynamicChildren:[
       { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
       { type: 'i', children: ctx.foo, patchFlag: 1 /* TEXT */},
     ]
-  ]
+  }
   ```
   </div>
 </div>
@@ -646,12 +645,217 @@ v-if 节点作为 Block
 
 ---
 
+#  v-for 作为 Block
 
-<!--
-如果节点的内部结构不会发生变化，只需要更新动态节点就行了。
-对于这样内部结构不变的节点，我们作为一个单元，提取其中的动态节点。
-相反，如果节点的内部结构是会变化的，那么就需要对整个VNode的children进行对比。
--->
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html {3-6}
+<template>
+  <div>
+    <div v-for="item in list">
+      <span>title:</span>
+      <span>{{ item }}</span>
+    </div>
+    <i>{{ foo }}</i>
+  </div>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript {all|4}
+  const block = {
+    type: 'div',
+    dynamicChildren: [
+      { type: Fragment, dynamicChildren:[...] },// v-for 节点
+      { type: 'i', children: ctx.foo, patchFlag: 1 /* TEXT */},
+    ]
+  }
+  ```
+  </div>
+</div>
+
+- 将整个 v-for 作为一个 Block
+- 无论 list 怎么改变，都不会导致外部结构变化
+
+---
+
+#  内部结构不稳定的Fragment
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html
+<template>
+  <div v-for="item in list">
+    <span>title:</span>
+    <span>{{ item }}</span>
+  </div>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript
+  // list = ['a', 'b']
+  const block = {
+    type: Fragment,
+    children:[...],
+    dynamicChildren: [
+      { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
+      { type: 'span', children: 'b', patchFlag: 1 /* TEXT */},
+    ]
+  }
+
+  // list = ['a']
+  const block = {
+    type: Fragment,
+    children:[...],
+    dynamicChildren: [
+      { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
+    ]
+  }
+  ```
+  </div>
+</div>
+
+- 不稳定的 Fragment 需要 full diff
+---
+
+#  stable fragment
+v-for 的表达式是常量
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html
+<template>
+  <div v-for="item in [1,2,3]">
+    <span>title:</span>
+    <span>{{ foo }}</span>
+  </div>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript
+  const block = {
+    type: Fragment,
+    dynamicChildren:[{ 
+      type: Fragment, 
+      dynamicChildren:[
+        { type:'span', children: ctx.foo, patchFlag: 1 /* TEXT */},
+        { type:'span', children: ctx.foo, patchFlag: 1 /* TEXT */},
+        { type:'span', children: ctx.foo, patchFlag: 1 /* TEXT */}
+      ]
+    }]
+  }
+  ```
+  </div>
+</div>
+
+stable fragment 需要 diff dynamicChildren
+
+---
+
+#  stable fragment
+template v-for
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html {all|2-5}
+<template>
+  <template v-for="item in list">
+    <p>{{ item.name }}</P>
+    <p>{{ item.age }}</P>
+  </template>
+</template> 
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript {all|5-8}
+  const block = {
+    type: Fragment,
+    dynamicChildren:[{ 
+      type: Fragment, 
+      dynamicChildren:[
+        { type:'p', children: item.name, patchFlag: 1 /* TEXT */},
+        { type:'p', children: item.age, patchFlag: 1 /* TEXT */}
+      ],
+      patchFlag: 64 /* STABLE_FRAGMENT */
+    },{ 
+      type: Fragment, 
+      dynamicChildren:[
+        { type:'p', children: item.name, patchFlag: 1 /* TEXT */},
+        { type:'p', children: item.age, patchFlag: 1 /* TEXT */}
+      ],
+      patchFlag: 64 /* STABLE_FRAGMENT */
+    },...],
+    patchFlag: 256 /* UNKEYED_FRAGMENT */
+  }
+  ```
+  </div>
+</div>
+
+
+---
+
+#  stable fragment
+多个根节点
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html
+<template>
+  <span v-if="x">a</span>
+  <div>b</div>
+  <p>c</p>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript
+  Block(Fragment)
+    - Block(span)
+    - VNode(div)
+    - VNode(p)
+  ```
+  </div>
+</div>
+
+---
+
 
 # Virtual DOM 的重构
 模板的好处
