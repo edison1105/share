@@ -312,14 +312,14 @@ el缓存到VNode上了，可以直接 patch。
 -->
 
 #  Vue3 中的优化
-如何标记动态节点
+在编译阶段给动态节点标记增加 PatchFlag
 
 
 <div class="flex flex-row">
   <div class="flex-1">
 
 - template
-```html {all}
+```html {all|5}
   <template>
     <div id="content">
       <p class="test">content</p>
@@ -335,17 +335,67 @@ el缓存到VNode上了，可以直接 patch。
   </div>
   <div class="flex-1 mx-20px">
 
+- render function
+```javascript {all|6}
+function render() {
+  // 此处对代码进行了简化
+  return createVNode('div',{ id: "content" }, [
+    createVNode('p', { class: "test" }, 'content'),
+    createVNode('p', { class: "test" }, 'content'),
+    createVNode('p', { class: "test" }, this.msg, PatchFlags.TEXT),
+    createVNode('p', { class: "test" }, 'content'),
+    createVNode('p', { class: "test" }, 'content'),
+  ])
+}
+```
+
+  </div>
+</div>
+
+
+- [AST](https://astexplorer.net/#/gist/51a08f2ce6aa6422d7794b7992e7b4da/5e22b9e652d7a825b2e9c05327375e45805ff64a)
+- PatchFlags 可以简单理解为一个枚举，每个枚举值有不同的含义
+  - 1：动态的文本
+  - 2：动态的 class
+  - //...
+---
+
+#  Vue3 中的优化
+
+<div class="flex flex-row">
+  <div class="flex-1">
+
+- render function
+```javascript
+function render() {
+  // 此处对代码进行了简化
+  return createVNode('div',{ id: "content" }, [
+    createVNode('p', { /**/ }, 'content'),
+    createVNode('p', { /**/ }, 'content'),
+    createVNode('p', { /**/ }, this.msg, PatchFlags.TEXT),
+    createVNode('p', { /**/ }, 'content'),
+    createVNode('p', { /**/ }, 'content'),
+  ])
+}
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
   - VNode
 
-  ```javascript {all|6}
+  ```javascript {all|10-12}
   const vnode = {
-    tag: 'div',
-    children:[
-      { tag: 'p', { class: 'test' }, 'content' },
-      { tag: 'p', { class: 'test' }, 'content' },
-      { tag: 'p', { class: 'test' }, ctx.msg }, // 动态节点
-      { tag: 'p', { class: 'test' }, 'content' },
-      { tag: 'p', { class: 'test' }, 'content' },
+    type: 'div',
+    children: [
+      { type: 'p', children: 'content' },
+      { type: 'p', children: 'content' },
+      { type: 'p', children: ctx.msg, patchFlag: 1 /* TEXT */ }, 
+      { type: 'p', children: 'content' },
+      { type: 'p', children: 'content' },
+    ],
+    dynamicChildren: [
+      { type: 'p', children: ctx.msg, patchFlag: 1 /* TEXT */ }, 
     ]
   }
   ```
@@ -353,37 +403,249 @@ el缓存到VNode上了，可以直接 patch。
   </div>
 </div>
 
+- 在首次渲染时，可以通过一个数组，将动态节点收集起来
+- 在 patch 时，就可以只 diff 动态节点
+- 拥有 dynamicChildren 属性的 VNode，就是一个 Block
 
-- 编译结果
-    - [AST](https://astexplorer.net/#/gist/51a08f2ce6aa6422d7794b7992e7b4da/5e22b9e652d7a825b2e9c05327375e45805ff64a)
 ---
-
-
 
 #  Vue3 中的优化
 
-- 节点内部结构不会变化
+<div class="flex flex-row">
+  <div class="flex-1">
 
-```html {5}
-  <template>
-    <div id="content">
-      <p class="test">content</p>
-      <p class="test">content</p>
-      <p class="test">{{ msg }}</p>
-      <p class="test">content</p>
-      <p class="test">content</p>
+- template
+```html
+<template>
+  <div>
+    <p class="test">{{ foo }}</p>
+    <div>
+      <span class="test">{{ bar }}</span>
     </div>
-  </template>
+  </div>
+</template>
 ```
 
+  </div>
+  <div class="flex-1 mx-20px">
 
-- 节点的内部结构不会变，就不需要对节点的 children 进行 diff
-- 只有一个动态节点
-- 通过一个数组，将动态节点提取出来，patch 时只更新动态节点
+  - VNode
 
+  ```javascript {all}
+  const vnode = {
+    type: 'div',
+    children: [
+      { type: 'p', children: ctx.foo, patchFlag: 1 /* TEXT */ }, 
+      { type: 'div', children: [
+          { type: 'span', children: ctx.bar, patchFlag: 1 /* TEXT */ }
+        ], 
+      },
+    ],
+    dynamicChildren: [
+      { type: 'p', children: ctx.foo, patchFlag: 1 /* TEXT */ },
+      { type: 'span', children: ctx.bar, patchFlag: 1 /* TEXT */ } 
+    ]
+  }
+  ```
 
-只有v-if 跟 v-for 会影响节点的内部结构。
+  </div>
+</div>
+
+- dynamicChildren 是忽略层级的，会收集所有子代的动态节点（patch 时无需遍历整个 VNode）
+- 什么样节点可以作为 Block?
 ---
+
+
+#  Block 的特点
+什么样的节点可以作为 Block?
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html
+<template>
+  <div>
+    <p class="test">{{ foo }}</p>
+    <div>
+      <span class="test">{{ bar }}</span>
+    </div>
+  </div>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block 的特点（节点的内部结构不会变化）
+    - 子节点的数量不会变化
+    - 子节点顺序不会变化
+  
+  </div>
+</div>
+
+- 有哪些操作为导致节点的内部结构发生变化
+  - v-if 
+  - v-for
+---
+
+#  节点的内部结构不稳定
+v-if 节点作为 Block
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html
+<template>
+  <div>
+    <div v-if="foo">
+      <p>hello</p>
+      <div>{{ bar }}</div>
+    </div>
+    <div v-else>
+      <p>world</p>
+      <div>{{ bar }}</div>
+      <div>{{ baz }}</div>
+    </div>
+  </div>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript {all|3-6|7-11}
+  const block = {// baz = true
+    type: 'div',
+    dynamicChildren:[
+      { type: 'div',  children: ctx.bar, patchFlag: 1 /* TEXT */ },
+    ]
+  }
+  const block = { // baz = false
+    type: 'div',
+    dynamicChildren:[
+      { type: 'div',  children: ctx.bar, patchFlag: 1 /* TEXT */ },
+      { type: 'div',  children: ctx.baz, patchFlag: 1 /* TEXT */ },
+    ]
+  }
+
+  ```
+  </div>
+</div>
+
+  - 当 v-if 的值发生变化的时候，动态节点的数量会不一致
+  - 会导致 diff 不正确
+
+---
+
+#  v-if 节点作为 Block
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html
+<template>
+  <div>
+    <div v-if="foo">
+      <p>hello</p>
+      <div>{{ bar }}</div>
+    </div>
+    <div v-else>
+      <p>world</p>
+      <div>{{ bar }}</div>
+      <div>{{ baz }}</div>
+    </div>
+  </div>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript
+  Block(div)
+    - Block(div v-if)
+    - Block(div v-else)
+
+  const block = {
+    type: 'div',
+    dynamicChildren: [
+      //  Block(v-if)
+      { type: 'div', { key: 0 }, children:[...], dynamicChildren:[...] },
+      //  Block(v-else)
+      { type: 'div', { key: 1 }, children:[...], dynamicChildren:[...] },
+    ]
+  }
+  ```
+  </div>
+</div>
+
+- v-if,v-else 会有不同的key
+- key 不相同，会进行 full diff（diff children）
+- 多个 Block 嵌套，就构成了 Block Tree
+---
+
+
+#  v-for 节点作为 Block
+
+<div class="flex flex-row">
+  <div class="flex-1">
+  
+- template
+
+```html
+<template>
+  <div>
+    <div v-for="item in list">
+      <span>title:</span>
+      <span>{{ item }}</span>
+    </div>
+    <i>{{ foo }}</i>
+  </div>
+</template>
+```
+
+  </div>
+  <div class="flex-1 mx-20px">
+
+  - Block
+  
+  ```javascript
+  // list = ['a', 'b']
+  const block = [
+    type: 'div',
+    dynamicChildren:[
+      { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
+      { type: 'span', children: 'b', patchFlag: 1 /* TEXT */},
+      { type: 'i', children: ctx.foo, patchFlag: 1 /* TEXT */},
+    ]
+  ]
+  // list = ['a']
+  const block = [
+    type: 'div',
+    dynamicChildren:[
+      { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
+      { type: 'i', children: ctx.foo, patchFlag: 1 /* TEXT */},
+    ]
+  ]
+  ```
+  </div>
+</div>
+
+- 动态节点的数量不一致，怎么 diff?
+    - 能将 dynamicChildren 进行传统 diff?
+
+---
+
 
 <!--
 如果节点的内部结构不会发生变化，只需要更新动态节点就行了。
