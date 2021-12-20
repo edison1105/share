@@ -204,10 +204,13 @@ const vnode = {
 
 <div class="mt-30px">
 
+<v-clicks>
+
 - diff 算法对比颗粒度是组件
 - 遍历整个VNode，**深度优先，同层比较**
 - 将差异 patch 到真实 DOM 上，减少回流与重绘
 
+</v-clicks>
 </div>
 ---
 
@@ -227,16 +230,20 @@ const vnode = {
     </div>
   </template>
 ```
+<v-click>
 
 - 思考
   - 那么才能避免性能的浪费？
+
+</v-click>
+
 ---
 
 # Vue2 中的优化
 Vue2为了向下兼容，采取了比较保守的做法：静态标记
 <div class="flex flex-row">
   <div>
-  
+
 - 编译期标记静态节点
 
 ```javascript
@@ -246,7 +253,11 @@ if (options.optimize !== false) {
   optimize(ast, options);
 }
 var code = generate(ast, options);
+
 ```
+
+<v-click>
+
 - render function
 ```javascript
 {
@@ -261,6 +272,8 @@ _m = function (index) {
 }
 
 ```
+</v-click>
+
 
   </div>
   <div class="flex-1 mx-10">
@@ -297,10 +310,14 @@ _m = function (index) {
     </div>
   </template>
 ```
+<v-click>
 
 - 重新思考
   - 我们其实关心的是动态节点，并不关心静态节点。
   - 有没有办法像标记静态节点那样，找出动态节点，运行时只更新动态节点？
+
+</v-click>
+
 ---
 
 <!--
@@ -401,9 +418,13 @@ function render() {
   </div>
 </div>
 
+<v-clicks>
+
 - 在首次渲染时，可以通过一个数组，将动态节点收集起来
 - 在 patch 时，就可以只 diff 动态节点
 - 拥有 dynamicChildren 属性的 VNode，就是一个 Block
+
+</v-clicks>
 
 ---
 
@@ -448,9 +469,13 @@ function render() {
 
   </div>
 </div>
+<v-clicks>
 
 - dynamicChildren 是忽略层级的，会收集所有子代的动态节点（patch 时无需遍历整个 VNode）
 - 什么样节点可以作为 Block?
+
+</v-clicks>
+
 ---
 
 
@@ -483,9 +508,14 @@ function render() {
   </div>
 </div>
 
+<v-click>
+
 - 有哪些操作为导致节点的内部结构发生变化
   - v-if 
   - v-for
+
+</v-click>
+
 ---
 
 #  节点的内部结构不稳定 v-if
@@ -535,8 +565,13 @@ function render() {
   </div>
 </div>
 
+
+<v-click>
+
   - 当 v-if 的值发生变化的时候，动态节点的数量会不一致
   - 会导致 diff 不正确
+
+</v-click>
 
 ---
 
@@ -586,9 +621,14 @@ function render() {
   </div>
 </div>
 
+<v-click>
+
 - v-if,v-else 会有不同的key
 - key 不相同，会进行 full diff（diff children）
 - 多个 Block 嵌套，就构成了 Block Tree
+
+</v-click>
+
 ---
 
 
@@ -638,8 +678,12 @@ function render() {
   </div>
 </div>
 
+<v-click>
+
 - 动态节点的数量不一致，怎么 diff?
     - 能将 dynamicChildren 进行传统 diff?
+
+</v-click>
 
 ---
 
@@ -667,7 +711,7 @@ function render() {
 
   - Block
   
-  ```javascript {all|4}
+```javascript {4}
   const block = {
     type: 'div',
     dynamicChildren: [
@@ -675,7 +719,7 @@ function render() {
       { type: 'i', children: ctx.foo, patchFlag: 1 /* TEXT */},
     ]
   }
-  ```
+```
   </div>
 </div>
 
@@ -795,7 +839,7 @@ template v-for
 
   - Block
   
-  ```javascript {all|5-8}
+```javascript {all|4-9}
   const block = {
     type: Fragment,
     dynamicChildren:[{ 
@@ -815,7 +859,7 @@ template v-for
     },...],
     patchFlag: 256 /* UNKEYED_FRAGMENT */
   }
-  ```
+```
   </div>
 </div>
 
