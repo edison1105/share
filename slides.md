@@ -856,7 +856,7 @@ template v-for
 
 # Block Tree
 
-<img :src="'./blocktree.jpg'">
+![BlockTree](/assets/blocktree.jpg)
 
 - 将模板基于动态节点指令切割为嵌套的区块。
 - 每个区块内部的节点结构是固定的。
