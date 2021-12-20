@@ -872,6 +872,26 @@ template v-for
 
 
 ---
+
+# 优化模式
+进入优化模式
+- STABLE_FRAGMENT
+
+
+---
+
+# 优化模式
+退出优化模式
+- UNKEYED_FRAGMENT
+- KEYED_FRAGMENT
+
+---
+
+# diff 算法优化
+patchKeyedChildren
+- 最长递增子序列
+
+---
 layout: center
 class: text-center
 ---
