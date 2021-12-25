@@ -10,5 +10,5 @@
     "@slidev/theme-default": "*",
     "@slidev/theme-seriph": "*"
   },
-  "name": "vue3-optimize"
+  "name": "virtual-dom-optimize"
 }

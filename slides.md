@@ -25,7 +25,7 @@ drawings:
 
 <div>
 
-[戴威@edison1105 / Vue.js team member ](https://github.com/edison1105) 
+[戴威 / Vue.js team member ](https://github.com/edison1105) 
 
 </div>
 
@@ -46,10 +46,10 @@ drawings:
     - 性能的浪费
     - Vue2中 diff 的优化
 - **Vue3 Virtual DOM 优化**
-    - 什么是 PatchFlags
-    - 什么是 BlockTree
-    - stable fragment
-- **Patch时的改进**
+    - 优化思路
+    - PatchFlags
+    - BlockTree
+- **Patch 的改进**
     - 优化模式
     - diff 算法的改进
 
@@ -204,13 +204,11 @@ const vnode = {
 
 <div class="mt-30px">
 
-<v-clicks>
 
 - diff 算法对比颗粒度是组件
 - 遍历整个VNode，**深度优先，同层比较**
 - 将差异 patch 到真实 DOM 上，减少回流与重绘
 
-</v-clicks>
 </div>
 ---
 
@@ -230,12 +228,10 @@ const vnode = {
     </div>
   </template>
 ```
-<v-click>
 
 - 思考
-  - 那么才能避免性能的浪费？
+  - 怎么才能避免性能的浪费？
 
-</v-click>
 
 ---
 
@@ -256,7 +252,6 @@ var code = generate(ast, options);
 
 ```
 
-<v-click>
 
 - render function
 ```javascript
@@ -267,19 +262,18 @@ var code = generate(ast, options);
 // renderStatic
 _m = function (index) {
   const node = staticRenderFns[index]()
-  node.isStatic = true
+  node.isStatic = true //标记为静态节点
   return node
 }
 
 ```
-</v-click>
 
 
   </div>
   <div class="flex-1 mx-10">
   
   - 有哪些节点是静态的？
-    - 节点类型是3(纯文本)
+    - 节点类型是纯文本
     - 节点使用了 v-pre
     - 其他满足以下条件的节点
       - 没有绑定的指令、事件等
@@ -310,13 +304,11 @@ _m = function (index) {
     </div>
   </template>
 ```
-<v-click>
 
 - 重新思考
   - 我们其实关心的是动态节点，并不关心静态节点。
   - 有没有办法像标记静态节点那样，找出动态节点，运行时只更新动态节点？
 
-</v-click>
 
 ---
 
@@ -351,17 +343,17 @@ el缓存到VNode上了，可以直接 patch。
   <div class="flex-1 mx-20px">
 
 - render function
-```javascript {all|6}
-function render() {
-  // 此处对代码进行了简化
-  return createVNode('div',{ id: "content" }, [
-    createVNode('p', { class: "test" }, 'content'),
-    createVNode('p', { class: "test" }, 'content'),
-    createVNode('p', { class: "test" }, this.msg, PatchFlags.TEXT),
-    createVNode('p', { class: "test" }, 'content'),
-    createVNode('p', { class: "test" }, 'content'),
-  ])
+```javascript {all|5}
+function render(_ctx) {
+  return (_openBlock(), _createElementBlock("div", { id: "content" }, [
+    _createElementVNode("p", { class: "test" }, "content"),
+    _createElementVNode("p", { class: "test" }, "content"),
+    _createElementVNode("p", { class: "test" }, _ctx.msg, PatchFlags.TEXT /* TEXT */),
+    _createElementVNode("p", { class: "test" }, "content"),
+    _createElementVNode("p", { class: "test" }, "content")
+  ]))
 }
+
 ```
 
   </div>
@@ -376,6 +368,7 @@ function render() {
 ---
 
 #  Vue3 中的优化
+ Block
 
 <div class="flex flex-row">
   <div class="flex-1">
@@ -400,7 +393,7 @@ function render() {
   - VNode
 
   ```javascript {all|10-12}
-  const vnode = {
+  const block = {
     type: 'div',
     children: [
       { type: 'p', children: 'content' },
@@ -418,18 +411,15 @@ function render() {
   </div>
 </div>
 
-<v-clicks>
 
 - 在首次渲染时，可以通过一个数组，将动态节点收集起来
-- 在 patch 时，就可以只 diff 动态节点
-- 拥有 dynamicChildren 属性的 VNode，就是一个 Block
+- 在 patch 时，就可以只 diff 动态节点(优化模式)
 
-</v-clicks>
 
 ---
 
 #  Vue3 中的优化
-
+dynamicChildren 是忽略层级的
 <div class="flex flex-row">
   <div class="flex-1">
 
@@ -451,7 +441,7 @@ function render() {
   - VNode
 
   ```javascript {all}
-  const vnode = {
+  const block = {
     type: 'div',
     children: [
       { type: 'p', children: ctx.foo, patchFlag: 1 /* TEXT */ }, 
@@ -469,12 +459,10 @@ function render() {
 
   </div>
 </div>
-<v-clicks>
 
-- dynamicChildren 是忽略层级的，会收集所有子代的动态节点（patch 时无需遍历整个 VNode）
+- dynamicChildren 会收集所有子代的动态节点（patch 时无需遍历整个 VNode）
 - 什么样节点可以作为 Block?
 
-</v-clicks>
 
 ---
 
@@ -510,7 +498,7 @@ function render() {
 
 <v-click>
 
-- 有哪些操作为导致节点的内部结构发生变化
+- 有哪些指令会导致节点的内部结构发生变化
   - v-if 
   - v-for
 
@@ -518,7 +506,7 @@ function render() {
 
 ---
 
-#  节点的内部结构不稳定 v-if
+#  v-if
 
 <div class="flex flex-row">
   <div class="flex-1">
@@ -547,13 +535,13 @@ function render() {
   - Block
   
   ```javascript {all|3-6|7-11}
-  const block = {// baz = true
+  const block = {// foo = true
     type: 'div',
     dynamicChildren:[
       { type: 'div',  children: ctx.bar, patchFlag: 1 /* TEXT */ },
     ]
   }
-  const block = { // baz = false
+  const block = { // foo = false
     type: 'div',
     dynamicChildren:[
       { type: 'div',  children: ctx.bar, patchFlag: 1 /* TEXT */ },
@@ -566,12 +554,10 @@ function render() {
 </div>
 
 
-<v-click>
 
   - 当 v-if 的值发生变化的时候，动态节点的数量会不一致
-  - 会导致 diff 不正确
+  - 能将 dynamicChildren 进行传统 diff 吗？
 
-</v-click>
 
 ---
 
@@ -621,18 +607,16 @@ function render() {
   </div>
 </div>
 
-<v-click>
 
 - v-if,v-else 会有不同的key
 - key 不相同，会进行 full diff（diff children）
 - 多个 Block 嵌套，就构成了 Block Tree
 
-</v-click>
 
 ---
 
 
-#  节点结构不稳定 v-for
+#  v-for
 
 <div class="flex flex-row">
   <div class="flex-1">
@@ -678,12 +662,9 @@ function render() {
   </div>
 </div>
 
-<v-click>
 
-- 动态节点的数量不一致，怎么 diff?
-    - 能将 dynamicChildren 进行传统 diff?
+- 动态节点的数量不一致，无法diff
 
-</v-click>
 
 ---
 
@@ -728,7 +709,7 @@ function render() {
 
 ---
 
-#  内部结构不稳定的Fragment
+#  Fragment
 
 <div class="flex flex-row">
   <div class="flex-1">
@@ -911,29 +892,17 @@ template v-for
 ---
 
 # 优化模式
+只对比动态节点
 
-- patchBlockChildren
-
-
----
-
-# 优化模式
-进入优化模式
-- STABLE_FRAGMENT
+- [patchBlockChildren](https://github.com/vuejs/vue-next/blob/master/packages/runtime-core/src/renderer.ts#L951)
 
 
 ---
 
-# 优化模式
-退出优化模式
-- UNKEYED_FRAGMENT
-- KEYED_FRAGMENT
-
----
 
 # diff 算法优化
-patchKeyedChildren
-- 最长递增子序列
+
+- [patchKeyedChildren](https://www.yuque.com/daiwei-wszhp/rd1ha6/gyug10)
 
 ---
 layout: center
