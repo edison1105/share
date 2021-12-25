@@ -210,6 +210,8 @@ const vnode = {
 - 将差异 patch 到真实 DOM 上，减少回流与重绘
 
 </div>
+
+
 ---
 
 # 传统 diff 算法
@@ -232,6 +234,9 @@ const vnode = {
 - 思考
   - 怎么才能避免性能的浪费？
 
+<!--
+虽然Vue能够保证触发更新的组件最小化，但是单个组件内部依然需要遍历该组件的整个Virtual DOM树
+-->
 
 ---
 
@@ -286,6 +291,13 @@ _m = function (index) {
   </div>
 </div>
 
+<!--
+编译期给AST节点打上静态标记
+生成VNode时标记为静态节点
+patch时跳过
+静态节点的要求很苛刻。基本上优化的空间非常有限
+-->
+
 ---
 
 # Vue2 中的优化
@@ -305,10 +317,12 @@ _m = function (index) {
   </template>
 ```
 
-- 重新思考
-  - 我们其实关心的是动态节点，并不关心静态节点。
+- 思考
   - 有没有办法像标记静态节点那样，找出动态节点，运行时只更新动态节点？
 
+<!--
+我们其实并不关心静态节点是否patch了，关心的是动态节点是否更新了。反向思考一下，如何标记动态节点
+-->
 
 ---
 
@@ -365,6 +379,11 @@ function render(_ctx) {
   - 1：动态的文本
   - 2：动态的 class
   - //...
+
+<!--
+AST上已经标记了节点是否是动态的
+-->
+
 ---
 
 #  Vue3 中的优化
@@ -415,6 +434,9 @@ function render() {
 - 在首次渲染时，可以通过一个数组，将动态节点收集起来
 - 在 patch 时，就可以只 diff 动态节点(优化模式)
 
+<!--
+优化模式就是只对比dynamicChildren
+-->
 
 ---
 
@@ -460,12 +482,14 @@ dynamicChildren 是忽略层级的
   </div>
 </div>
 
-- dynamicChildren 会收集所有子代的动态节点（patch 时无需遍历整个 VNode）
+- dynamicChildren 会收集所有子代的动态节点
 - 什么样节点可以作为 Block?
 
+<!--
+忽略层级就能避免遍历整个VNode
+-->
 
 ---
-
 
 #  Block 的特点
 什么样的节点可以作为 Block?
@@ -503,6 +527,10 @@ dynamicChildren 是忽略层级的
   - v-for
 
 </v-click>
+
+<!--
+只有内部结构稳定的节点才可以作为Block
+-->
 
 ---
 
@@ -558,6 +586,9 @@ dynamicChildren 是忽略层级的
   - 当 v-if 的值发生变化的时候，动态节点的数量会不一致
   - 能将 dynamicChildren 进行传统 diff 吗？
 
+<!--
+dynamicChildren中的节点是不区分层级的，所以不能进行传统diff
+-->
 
 ---
 
@@ -615,7 +646,6 @@ dynamicChildren 是忽略层级的
 
 ---
 
-
 #  v-for
 
 <div class="flex flex-row">
@@ -665,6 +695,9 @@ dynamicChildren 是忽略层级的
 
 - 动态节点的数量不一致，无法diff
 
+<!--
+不能对dynamicChildren进行传统diff
+-->
 
 ---
 
@@ -738,7 +771,8 @@ dynamicChildren 是忽略层级的
     dynamicChildren: [
       { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
       { type: 'span', children: 'b', patchFlag: 1 /* TEXT */},
-    ]
+    ],
+    patchFlag: 256 /* UNKEYED_FRAGMENT */
   }
 
   // list = ['a']
@@ -747,13 +781,19 @@ dynamicChildren 是忽略层级的
     children:[...],
     dynamicChildren: [
       { type: 'span', children: 'a', patchFlag: 1 /* TEXT */},
-    ]
+    ],
+    patchFlag: 256 /* UNKEYED_FRAGMENT */
   }
   ```
   </div>
 </div>
 
 - 不稳定的 Fragment 需要 full diff
+
+<!--
+unkeyedFragment & keyedFragment
+-->
+
 ---
 
 #  stable fragment
@@ -788,7 +828,8 @@ v-for 的表达式是常量
         { type:'span', children: ctx.foo, patchFlag: 1 /* TEXT */},
         { type:'span', children: ctx.foo, patchFlag: 1 /* TEXT */}
       ]
-    }]
+    }],
+    patchFlag: 64 /* STABLE_FRAGMENT */
   }
   ```
   </div>
@@ -870,12 +911,22 @@ template v-for
   
   ```javascript
   Block(Fragment)
-    - Block(span)
+    - Block(v-if)
     - VNode(div)
     - VNode(p)
+
+  const block = {
+    type: Fragment,
+    dynamicChildren:[
+      { type: "span", { key: 0 }, children: "a", patchFlag: 0 }
+  }
   ```
   </div>
 </div>
+
+<!--
+Vue3 不再限制组件的模板必须有一个根节点，对于多个根节点的模板
+-->
 
 ---
 
@@ -910,5 +961,4 @@ class: text-center
 ---
 # THANKS
 
-[戴威 / Vue.js team member ](https://github.com/edison1105) 
-
+[戴威 / Vue.js team member ](https://github.com/edison1105)
