@@ -390,7 +390,7 @@ function render() {
   </div>
   <div class="flex-1 mx-20px">
 
-  - VNode
+  - Block
 
   ```javascript {all|10-12}
   const block = {
