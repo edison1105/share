@@ -568,7 +568,7 @@ dynamicChildren 是忽略层级的
   
 - template
 
-```html
+```html{4-5,8-10}
 <template>
   <div>
     <div v-if="foo">
@@ -589,7 +589,7 @@ dynamicChildren 是忽略层级的
 
   - Block
   
-  ```javascript
+```javascript{1-3,8-11}
   Block(div)
     - Block(div v-if)
     - Block(div v-else)
@@ -603,7 +603,7 @@ dynamicChildren 是忽略层级的
       { type: 'div', { key: 1 }, children:[...], dynamicChildren:[...] },
     ]
   }
-  ```
+```
   </div>
 </div>
 
