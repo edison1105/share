@@ -430,7 +430,8 @@ function render() {
 - 在 patch 时，就可以只 diff 动态节点(优化模式)
 
 <!--
-优化模式就是只对比dynamicChildren
+优化模式就是只对比dynamicChildren。
+对于带有dynamicChildren的节点，我们称之为Block
 -->
 
 ---
@@ -938,7 +939,7 @@ Vue3 不再限制组件的模板必须有一个根节点，对于多个根节点
 ---
 
 # 优化模式
-只对比动态节点
+只patch dynamicChildren
 
 - [patchBlockChildren](https://github.com/vuejs/vue-next/blob/master/packages/runtime-core/src/renderer.ts#L951)
 
@@ -946,7 +947,7 @@ Vue3 不再限制组件的模板必须有一个根节点，对于多个根节点
 ---
 
 
-# diff 算法优化
+# 核心 diff 算法
 
 - [patchKeyedChildren](https://www.yuque.com/daiwei-wszhp/rd1ha6/gyug10)
 
