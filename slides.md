@@ -44,13 +44,14 @@ drawings:
     - 运行时
 - **传统 Diff 算法** 
     - 性能的浪费
-    - Vue2中 diff 的优化
+- **Vue2 Virtual DOM 优化**
+    - 静态标记
 - **Vue3 Virtual DOM 优化**
     - 优化思路
     - PatchFlags
     - BlockTree
     - 优化模式
-    - diff 算法的改进
+    - 核心 diff 算法
 
 ---
 
