@@ -52,6 +52,7 @@ drawings:
     - BlockTree
     - 优化模式
     - 核心 diff 算法
+    - 静态提升
 
 ---
 
